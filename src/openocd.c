@@ -28,6 +28,7 @@
 #include <target/arm_adi_v5.h>
 #include <target/arm_tpiu_swo.h>
 #include <rtt/rtt.h>
+#include <target/alius/alius.h>
 
 #include <server/server.h>
 #include <server/gdb_server.h>
@@ -316,6 +317,7 @@ static struct command_context *setup_command_handler(Jim_Interp *interp)
 		&cti_register_commands,
 		&dap_register_commands,
 		&arm_tpiu_swo_register_commands,
+		&alius_register_commands,
 		NULL
 	};
 	for (unsigned i = 0; command_registrants[i]; i++) {

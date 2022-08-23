@@ -1,0 +1,46 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+
+/***************************************************************************
+ *   Copyright (C) 2009 Jinping Wu <wunekky@gmail.com>             *
+ ***************************************************************************/
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+#include <helper/log.h>
+#include "alius.h"
+
+COMMAND_HANDLER(handle_version_command)
+{
+	uint32_t version = ALIUS_VERSION;
+
+	command_print(CMD, "Alius command version: %d", version);
+	return ERROR_OK;
+}
+
+static const struct command_registration alius_sub_command_handlers[] = {
+	{
+		.name = "version",
+		.handler = &handle_version_command,
+		.mode = COMMAND_ANY,
+		.usage = "",
+		.help = "show the version of alius command",
+	},
+	COMMAND_REGISTRATION_DONE
+};
+
+const struct command_registration alius_command_handlers[] = {
+	{
+		.name = "alius",
+		.mode = COMMAND_ANY,
+		.help = "alius cmd for aon, lp, hp",
+		.chain = alius_sub_command_handlers,
+		.usage = "",
+	},
+	COMMAND_REGISTRATION_DONE
+};
+
+int alius_register_commands(struct command_context *cmd_ctx)
+{
+	return register_commands(cmd_ctx, NULL, alius_command_handlers);
+}

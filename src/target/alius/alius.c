@@ -9,6 +9,7 @@
 #endif
 #include <helper/log.h>
 #include "alius.h"
+#include "alius_rom_table.h"
 
 COMMAND_HANDLER(handle_version_command)
 {
@@ -23,6 +24,13 @@ static const struct command_registration alius_sub_command_handlers[] = {
 		.mode = COMMAND_ANY,
 		.usage = "",
 		.help = "show the version of alius command",
+	},
+	{
+		.name = "romtable",
+		.chain = alius_rom_table_command_handlers,
+		.mode = COMMAND_ANY,
+		.usage = "",
+		.help = "prase rom table",
 	},
 	COMMAND_REGISTRATION_DONE
 };

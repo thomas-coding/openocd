@@ -89,6 +89,7 @@ struct adiv5_dap *dap_instance_by_jim_obj(Jim_Interp *interp, Jim_Obj *o)
 	return NULL;
 }
 
+struct adiv5_dap *global_dap;
 static int dap_init_all(void)
 {
 	struct arm_dap_object *obj;
@@ -124,6 +125,8 @@ static int dap_init_all(void)
 			LOG_DEBUG("DAP %s configured to use %s protocol by user cfg file", jtag_tap_name(dap->tap),
 				is_adiv6(dap) ? "ADIv6" : "ADIv5");
 		}
+
+		global_dap = dap;
 
 		retval = dap->ops->connect(dap);
 		if (retval != ERROR_OK)

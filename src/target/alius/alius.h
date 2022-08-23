@@ -9,7 +9,8 @@
 
 struct command_registration;
 
-#define ALIUS_VERSION 1
+#define ALIUS_VERSION_MAJOR 0
+#define ALIUS_VERSION_MIMOR 1
 
 /**
  * Export the registration for the alius command group, so it can be

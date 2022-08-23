@@ -12,9 +12,7 @@
 
 COMMAND_HANDLER(handle_version_command)
 {
-	uint32_t version = ALIUS_VERSION;
-
-	command_print(CMD, "Alius command version: %d", version);
+	command_print(CMD, "Alius command version: %d.%d", ALIUS_VERSION_MAJOR, ALIUS_VERSION_MIMOR);
 	return ERROR_OK;
 }
 

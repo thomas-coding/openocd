@@ -347,6 +347,23 @@ int aon_m33_step(void) {
 	return ERROR_OK;
 }
 
+int aon_m33_clear_step(void) {
+	uint32_t value, retval;
+
+	retval = aon_m33_read_memory_drw(DCB_DHCSR, &value);
+	if(retval != ERROR_OK) {
+		return retval;
+	}
+
+	value &= ~((0xFFFFul << 16) | C_STEP);
+	value |= DBGKEY| C_DEBUGEN;
+	retval = aon_m33_write_memory_drw(DCB_DHCSR, value);
+	if(retval != ERROR_OK) {
+		return retval;
+	}
+	return ERROR_OK;
+}
+
 int aon_m33_unhalt(void) {
 	uint32_t value, retval;
 
@@ -906,6 +923,12 @@ COMMAND_HANDLER(handle_step_command)
 	retval = aon_m33_step();
 	if(retval != ERROR_OK) {
 		command_print(CMD, "step fail");
+		return retval;
+	}
+
+	retval = aon_m33_clear_step();
+	if(retval != ERROR_OK) {
+		command_print(CMD, "clear step fail");
 		return retval;
 	}
 

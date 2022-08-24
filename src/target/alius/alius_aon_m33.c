@@ -329,6 +329,24 @@ int aon_m33_halt(void) {
 	return ERROR_OK;
 }
 
+int aon_m33_step(void) {
+	uint32_t value, retval;
+
+	retval = aon_m33_read_memory_drw(DCB_DHCSR, &value);
+	if(retval != ERROR_OK) {
+		return retval;
+	}
+
+	/* clear halt and set step, after step, hardware will enter halt again */
+	value &= ~((0xFFFFul << 16) | C_HALT);
+	value |= DBGKEY | C_STEP | C_DEBUGEN;
+	retval = aon_m33_write_memory_drw(DCB_DHCSR, value);
+	if(retval != ERROR_OK) {
+		return retval;
+	}
+	return ERROR_OK;
+}
+
 int aon_m33_unhalt(void) {
 	uint32_t value, retval;
 
@@ -873,6 +891,27 @@ COMMAND_HANDLER(handle_ap_reg_write_command)
 	return ERROR_OK;
 }
 
+COMMAND_HANDLER(handle_step_command)
+{
+	uint32_t retval;
+
+	if (CMD_ARGC != 0)
+		return ERROR_COMMAND_SYNTAX_ERROR;
+
+	if(!ap_init) {
+		alius_aon_m33_init(global_dap);
+		ap_init = 1;
+	}
+
+	retval = aon_m33_step();
+	if(retval != ERROR_OK) {
+		command_print(CMD, "step fail");
+		return retval;
+	}
+
+	return ERROR_OK;
+}
+
 const struct command_registration alius_aon_m33_command_handlers[] = {
 	{
 		.name = "info",
@@ -978,6 +1017,13 @@ const struct command_registration alius_aon_m33_command_handlers[] = {
 		.mode = COMMAND_ANY,
 		.usage = "address value",
 		.help = "write ahb ap register, address is ahb ap reg offset",
+	},
+	{
+		.name = "step",
+		.handler = &handle_step_command,
+		.mode = COMMAND_ANY,
+		.usage = "",
+		.help = "step, execute one instruction and enter debug state again",
 	},
 	COMMAND_REGISTRATION_DONE
 };

@@ -5,4 +5,6 @@ noinst_LTLIBRARIES += %D%/libalius.la
        %D%/alius.c \
        %D%/alius.h \
        %D%/alius_rom_table.c \
-       %D%/alius_rom_table.h
+       %D%/alius_rom_table.h \
+       %D%/alius_aon_m33.h \
+       %D%/alius_aon_m33.c

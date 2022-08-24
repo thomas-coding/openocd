@@ -10,6 +10,7 @@
 #include <helper/log.h>
 #include "alius.h"
 #include "alius_rom_table.h"
+#include "alius_aon_m33.h"
 
 COMMAND_HANDLER(handle_version_command)
 {
@@ -31,6 +32,13 @@ static const struct command_registration alius_sub_command_handlers[] = {
 		.mode = COMMAND_ANY,
 		.usage = "",
 		.help = "prase rom table",
+	},
+	{
+		.name = "m33",
+		.chain = alius_aon_m33_command_handlers,
+		.mode = COMMAND_ANY,
+		.usage = "",
+		.help = "handle aon m33",
 	},
 	COMMAND_REGISTRATION_DONE
 };

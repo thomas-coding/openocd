@@ -298,6 +298,9 @@ struct adiv5_ap {
 
 	/* AP referenced during config. Never put it, even when refcount reaches zero */
 	bool config_ap_never_release;
+
+	/* Target customization, like which has secord mem-ap */
+	uint32_t target;
 };
 
 
@@ -543,7 +546,7 @@ static inline int dap_queue_dp_write(struct adiv5_dap *dap,
  *
  * @return ERROR_OK for success, else a fault code.
  */
-static inline int dap_queue_ap_read(struct adiv5_ap *ap,
+static inline int dap_queue_ap_read_origin(struct adiv5_ap *ap,
 		unsigned reg, uint32_t *data)
 {
 	assert(ap->dap->ops);
@@ -563,7 +566,7 @@ static inline int dap_queue_ap_read(struct adiv5_ap *ap,
  *
  * @return ERROR_OK for success, else a fault code.
  */
-static inline int dap_queue_ap_write(struct adiv5_ap *ap,
+static inline int dap_queue_ap_write_origin(struct adiv5_ap *ap,
 		unsigned reg, uint32_t data)
 {
 	assert(ap->dap->ops);
@@ -573,6 +576,67 @@ static inline int dap_queue_ap_write(struct adiv5_ap *ap,
 	}
 	return ap->dap->ops->queue_ap_write(ap, reg, data);
 }
+
+#include "target/alius/alius_rom_table.h"
+static inline int dap_queue_ap_read(struct adiv5_ap *ap,
+		unsigned reg, uint32_t *data)
+{
+	uint32_t retval;
+	uint32_t second;
+
+	assert(ap->dap->ops);
+	if (ap->refcount == 0) {
+		ap->refcount = 1;
+		LOG_ERROR("BUG: refcount AP#0x%" PRIx64 " used without get", ap->ap_num);
+	}
+
+	if(ap->target == TARGET_ALIUS) {
+		if(ap->ap_num == TOP_AON_APBAP)
+			second = AON_M33_AHBAP;
+
+		retval = ap->dap->ops->queue_ap_write(ap, ADIV6_MEM_AP_REG_TAR, second + reg);
+		if (retval == ERROR_OK)
+			retval = ap->dap->ops->run(ap->dap);
+
+		retval = ap->dap->ops->queue_ap_read(ap, ADIV6_MEM_AP_REG_DRW, data);
+		if (retval == ERROR_OK)
+			retval = ap->dap->ops->run(ap->dap);
+	} else {
+		retval = ap->dap->ops->queue_ap_read(ap, reg, data);
+	}
+	return retval;
+}
+
+static inline int dap_queue_ap_write(struct adiv5_ap *ap,
+		unsigned reg, uint32_t data)
+{
+	uint32_t retval;
+	uint32_t second;
+
+	assert(ap->dap->ops);
+	if (ap->refcount == 0) {
+		ap->refcount = 1;
+		LOG_ERROR("BUG: refcount AP#0x%" PRIx64 " used without get", ap->ap_num);
+	}
+
+	if(ap->target == TARGET_ALIUS) {
+		if(ap->ap_num == TOP_AON_APBAP)
+			second = AON_M33_AHBAP;
+
+		retval = ap->dap->ops->queue_ap_write(ap, ADIV6_MEM_AP_REG_TAR, second + reg);
+		if (retval == ERROR_OK)
+			retval = ap->dap->ops->run(ap->dap);
+
+		retval = ap->dap->ops->queue_ap_write(ap, ADIV6_MEM_AP_REG_DRW, data);
+		if (retval == ERROR_OK)
+			retval = ap->dap->ops->run(ap->dap);
+	} else {
+		retval = ap->dap->ops->queue_ap_write(ap, reg, data);
+	}
+
+	return retval;
+}
+
 
 /**
  * Queue an AP abort operation.  The current AP transaction is aborted,

@@ -46,6 +46,10 @@ enum rom_table_region {
     HP = 3
 };
 
+enum target_class {
+    TARGET_UNKNOW = 0,
+    TARGET_ALIUS = 1
+};
 
 /* Coresight component address */
 //top

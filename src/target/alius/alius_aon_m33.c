@@ -40,23 +40,23 @@ int aon_m33_read_memory_16bytes_by_bd(uint32_t address, uint32_t *value) {
 	}
 
 	//write aon tar. value is m33 tar
-	retval = dap_queue_ap_write(ap, AP_TAR, AON_M33_AHBAP + AP_TAR);
+	retval = dap_queue_ap_write_origin(ap, AP_TAR, AON_M33_AHBAP + AP_TAR);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 
 	//write aon drw. value is address. so update m33 tar to address
-	retval = dap_queue_ap_write(ap, AP_DRW, address);
+	retval = dap_queue_ap_write_origin(ap, AP_DRW, address);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 
 	for(int i = 0; i < 4; i++) {
 		//write aon tar. value is m33 BD
-		retval = dap_queue_ap_write(ap, AP_TAR, AON_M33_AHBAP + AP_BD0 + 4 * i);
+		retval = dap_queue_ap_write_origin(ap, AP_TAR, AON_M33_AHBAP + AP_BD0 + 4 * i);
 		if (retval == ERROR_OK)
 			retval = dap_run(ap->dap);
 		
 		//get the value
-		retval = dap_queue_ap_read(ap, AP_DRW, &temp);
+		retval = dap_queue_ap_read_origin(ap, AP_DRW, &temp);
 		if (retval == ERROR_OK)
 			retval = dap_run(ap->dap);
 		
@@ -79,23 +79,23 @@ int aon_m33_write_memory_16bytes_by_bd(uint32_t address, uint32_t *value) {
 	}
 
 	//write aon tar. value is m33 tar
-	retval = dap_queue_ap_write(ap, AP_TAR, AON_M33_AHBAP + AP_TAR);
+	retval = dap_queue_ap_write_origin(ap, AP_TAR, AON_M33_AHBAP + AP_TAR);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 
 	//write aon drw. value is address. so update m33 tar to address
-	retval = dap_queue_ap_write(ap, AP_DRW, address);
+	retval = dap_queue_ap_write_origin(ap, AP_DRW, address);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 
 	for(int i = 0; i < 4; i++) {
 		//write aon tar. value is m33 DAR
-		retval = dap_queue_ap_write(ap, AP_TAR, AON_M33_AHBAP + AP_BD0 + 4 * i);
+		retval = dap_queue_ap_write_origin(ap, AP_TAR, AON_M33_AHBAP + AP_BD0 + 4 * i);
 		if (retval == ERROR_OK)
 			retval = dap_run(ap->dap);
 		
 		//write value
-		retval = dap_queue_ap_write(ap, AP_DRW, value[i]);
+		retval = dap_queue_ap_write_origin(ap, AP_DRW, value[i]);
 		if (retval == ERROR_OK)
 			retval = dap_run(ap->dap);
 	}
@@ -117,23 +117,23 @@ int aon_m33_read_memory_1k_by_dar(uint32_t address, uint32_t *value) {
 	}
 
 	//write aon tar. value is m33 tar
-	retval = dap_queue_ap_write(ap, AP_TAR, AON_M33_AHBAP + AP_TAR);
+	retval = dap_queue_ap_write_origin(ap, AP_TAR, AON_M33_AHBAP + AP_TAR);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 
 	//write aon drw. value is address. so update m33 tar to address
-	retval = dap_queue_ap_write(ap, AP_DRW, address);
+	retval = dap_queue_ap_write_origin(ap, AP_DRW, address);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 
 	for(int i = 0; i < 256; i++) {
 		//write aon tar. value is m33 DAR
-		retval = dap_queue_ap_write(ap, AP_TAR, AON_M33_AHBAP + AP_DAR0 + 4 * i);
+		retval = dap_queue_ap_write_origin(ap, AP_TAR, AON_M33_AHBAP + AP_DAR0 + 4 * i);
 		if (retval == ERROR_OK)
 			retval = dap_run(ap->dap);
 		
 		//get the value from m33 drw
-		retval = dap_queue_ap_read(ap, AP_DRW, &temp);
+		retval = dap_queue_ap_read_origin(ap, AP_DRW, &temp);
 		if (retval == ERROR_OK)
 			retval = dap_run(ap->dap);
 		
@@ -156,23 +156,23 @@ int aon_m33_write_memory_1k_by_dar(uint32_t address, uint32_t *value) {
 	}
 
 	//write aon tar. value is m33 tar
-	retval = dap_queue_ap_write(ap, AP_TAR, AON_M33_AHBAP + AP_TAR);
+	retval = dap_queue_ap_write_origin(ap, AP_TAR, AON_M33_AHBAP + AP_TAR);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 
 	//write aon drw. value is address. so update m33 tar to address
-	retval = dap_queue_ap_write(ap, AP_DRW, address);
+	retval = dap_queue_ap_write_origin(ap, AP_DRW, address);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 
 	for(int i = 0; i < 256; i++) {
 		//write aon tar. value is m33 DAR
-		retval = dap_queue_ap_write(ap, AP_TAR, AON_M33_AHBAP + AP_DAR0 + 4 * i);
+		retval = dap_queue_ap_write_origin(ap, AP_TAR, AON_M33_AHBAP + AP_DAR0 + 4 * i);
 		if (retval == ERROR_OK)
 			retval = dap_run(ap->dap);
 		
 		//write value the value to m33 drw
-		retval = dap_queue_ap_write(ap, AP_DRW, value[i]);
+		retval = dap_queue_ap_write_origin(ap, AP_DRW, value[i]);
 		if (retval == ERROR_OK)
 			retval = dap_run(ap->dap);
 	}
@@ -186,22 +186,22 @@ int aon_m33_read_memory_drw(uint32_t address, uint32_t *value) {
 	struct adiv5_ap *ap = dap_get_ap(global_dap, TOP_AON_APBAP);
 
 	//write aon tar. value is m33 tar
-	retval = dap_queue_ap_write(ap, AP_TAR, AON_M33_AHBAP + AP_TAR);
+	retval = dap_queue_ap_write_origin(ap, AP_TAR, AON_M33_AHBAP + AP_TAR);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 
 	//write aon drw. value is address. so update m33 tar to address
-	retval = dap_queue_ap_write(ap, AP_DRW, address);
+	retval = dap_queue_ap_write_origin(ap, AP_DRW, address);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 
 	//write aon tar. value is m33 drw
-	retval = dap_queue_ap_write(ap, AP_TAR, AON_M33_AHBAP + AP_DRW);
+	retval = dap_queue_ap_write_origin(ap, AP_TAR, AON_M33_AHBAP + AP_DRW);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 	
 	//get the value from m33 drw
-	retval = dap_queue_ap_read(ap, AP_DRW, value);
+	retval = dap_queue_ap_read_origin(ap, AP_DRW, value);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 	
@@ -214,22 +214,22 @@ int aon_m33_write_memory_drw(uint32_t address, uint32_t value) {
 	struct adiv5_ap *ap = dap_get_ap(global_dap, TOP_AON_APBAP);
 
 	//write aon tar. value is m33 tar
-	retval = dap_queue_ap_write(ap, AP_TAR, AON_M33_AHBAP + AP_TAR);
+	retval = dap_queue_ap_write_origin(ap, AP_TAR, AON_M33_AHBAP + AP_TAR);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 
 	//write aon drw. value is address. so update m33 tar to address
-	retval = dap_queue_ap_write(ap, AP_DRW, address);
+	retval = dap_queue_ap_write_origin(ap, AP_DRW, address);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 
 	//write aon tar. value is m33 drw
-	retval = dap_queue_ap_write(ap, AP_TAR, AON_M33_AHBAP + AP_DRW);
+	retval = dap_queue_ap_write_origin(ap, AP_TAR, AON_M33_AHBAP + AP_DRW);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 	
 	//write value to drw
-	retval = dap_queue_ap_write(ap, AP_DRW, value);
+	retval = dap_queue_ap_write_origin(ap, AP_DRW, value);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 	
@@ -242,12 +242,12 @@ int aon_m33_read_ahb_ap_register(uint32_t reg, uint32_t *value) {
 	struct adiv5_ap *ap = dap_get_ap(global_dap, TOP_AON_APBAP);
 
 	//write aon tar. value is which ahb_ap reg we need to access
-	retval = dap_queue_ap_write(ap, AP_TAR, AON_M33_AHBAP + reg);
+	retval = dap_queue_ap_write_origin(ap, AP_TAR, AON_M33_AHBAP + reg);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 
 	//get the value
-	retval = dap_queue_ap_read(ap, AP_DRW, value);
+	retval = dap_queue_ap_read_origin(ap, AP_DRW, value);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 
@@ -260,12 +260,12 @@ int aon_m33_write_ahb_ap_register(uint32_t reg, uint32_t value) {
 	struct adiv5_ap *ap = dap_get_ap(global_dap, TOP_AON_APBAP);
 
 	//write aon tar. value is which ahb_ap reg we need to access
-	retval = dap_queue_ap_write(ap, AP_TAR, AON_M33_AHBAP + reg);
+	retval = dap_queue_ap_write_origin(ap, AP_TAR, AON_M33_AHBAP + reg);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 
 	//write the value
-	retval = dap_queue_ap_write(ap, AP_DRW, value);
+	retval = dap_queue_ap_write_origin(ap, AP_DRW, value);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
 

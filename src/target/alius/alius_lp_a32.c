@@ -141,6 +141,19 @@ COMMAND_HANDLER(handle_info_command)
 	return ERROR_OK;
 }
 
+COMMAND_HANDLER(handle_midr_command)
+{
+	uint32_t retval, value;
+	retval = lp_read_a32_core0_debug(DEBUG_MIDR, &value);
+	if(retval != ERROR_OK) {
+		command_print(CMD, "read midr fail");
+		return retval;
+	}
+
+	command_print(CMD, "MIDR:  0x%08x", value);
+	return ERROR_OK;
+}
+
 const struct command_registration alius_lp_a32_command_handlers[] = {
 	{
 		.name = "info",
@@ -148,6 +161,13 @@ const struct command_registration alius_lp_a32_command_handlers[] = {
 		.mode = COMMAND_ANY,
 		.usage = "",
 		.help = "display lp a32 info",
+	},
+	{
+		.name = "midr",
+		.handler = &handle_midr_command,
+		.mode = COMMAND_ANY,
+		.usage = "",
+		.help = "display core midr",
 	},
 	{
 		.name = "rc0debug",

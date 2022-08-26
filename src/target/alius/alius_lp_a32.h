@@ -13,6 +13,7 @@
 #define LP_A32_CORE0_TRACE 0x40000
 
 /* Debug memory */
+#define DEBUG_OSLAR 0x0300
 #define DEBUG_MIDR 0x0d00
 
 

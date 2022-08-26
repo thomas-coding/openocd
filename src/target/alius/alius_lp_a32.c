@@ -26,12 +26,28 @@
 
 extern struct adiv5_dap *global_dap;
 uint32_t lp_a32_init = 0;
+int lp_read_a32_core0_debug(uint32_t reg, uint32_t *value);
+int lp_write_a32_core0_debug(uint32_t reg, uint32_t value);
+
+
+int lp_enable_debug(void) {
+	uint32_t retval;
+
+	/* unlock memory map address access */
+	retval = lp_write_a32_core0_debug(DEBUG_OSLAR, 0);
+	return retval;
+}
 
 void alius_lp_a32_init(struct adiv5_dap *dap) {
+
+	uint32_t retval;
 
 	dap->ap[0].ap_num = TOP_BASE;
 	dap->ap[2].ap_num = TOP_LP_APBAP;
 	dap->adi_version = 6;
+	retval = lp_enable_debug();
+	if (retval != ERROR_OK)
+		LOG_OUTPUT("alius lp a32 init fail\n");
 }
 
 int lp_read_a32_debug(uint32_t address, uint32_t *value) {

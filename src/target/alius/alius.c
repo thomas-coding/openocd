@@ -11,6 +11,7 @@
 #include "alius.h"
 #include "alius_rom_table.h"
 #include "alius_aon_m33.h"
+#include "alius_lp_a32.h"
 
 COMMAND_HANDLER(handle_version_command)
 {
@@ -39,6 +40,13 @@ static const struct command_registration alius_sub_command_handlers[] = {
 		.mode = COMMAND_ANY,
 		.usage = "",
 		.help = "handle aon m33",
+	},
+	{
+		.name = "lp",
+		.chain = alius_lp_a32_command_handlers,
+		.mode = COMMAND_ANY,
+		.usage = "",
+		.help = "handle lp a32",
 	},
 	COMMAND_REGISTRATION_DONE
 };

@@ -60,7 +60,7 @@ enum target_class {
 //aon
 #define AON_M33_AHBAP 0x00010000
 //lp
-#define LP_A32_APBAP 0x09000000
+#define LP_A32_APBAP 0x01000000
 
 #define DEV_ARCH_OFFSET 0x1FBC
 

@@ -28,6 +28,8 @@ extern struct adiv5_dap *global_dap;
 uint32_t lp_a32_init = 0;
 int lp_read_a32_core0_debug(uint32_t reg, uint32_t *value);
 int lp_write_a32_core0_debug(uint32_t reg, uint32_t value);
+int lp_read_a32_core0_cti(uint32_t reg, uint32_t *value);
+int lp_write_a32_core0_cti(uint32_t reg, uint32_t value);
 
 
 int lp_enable_debug(void) {
@@ -35,6 +37,14 @@ int lp_enable_debug(void) {
 
 	/* unlock memory map address access */
 	retval = lp_write_a32_core0_debug(DEBUG_OSLAR, 0);
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* enable cti */
+	retval = lp_write_a32_core0_cti(CTI_CONTROL, 0x1);
+	if (retval != ERROR_OK)
+		return retval;
+
 	return retval;
 }
 
@@ -64,7 +74,7 @@ int lp_read_a32_debug(uint32_t address, uint32_t *value) {
 	retval = dap_queue_ap_read_origin(ap, AP_DRW, value);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
-	
+
 	return retval;
 }
 
@@ -82,7 +92,7 @@ int lp_write_a32_debug(uint32_t address, uint32_t value) {
 	retval = dap_queue_ap_write_origin(ap, AP_DRW, value);
 	if (retval == ERROR_OK)
 		retval = dap_run(ap->dap);
-	
+
 	return retval;
 }
 
@@ -90,7 +100,7 @@ int lp_read_a32_core0_debug(uint32_t reg, uint32_t *value) {
 	int retval = ERROR_OK;
 
 	retval = lp_read_a32_debug(LP_A32_CORE0_DEBUG + reg, value);
-	
+
 	return retval;
 }
 
@@ -98,8 +108,70 @@ int lp_write_a32_core0_debug(uint32_t reg, uint32_t value) {
 	int retval = ERROR_OK;
 
 	retval = lp_write_a32_debug(LP_A32_CORE0_DEBUG + reg, value);
-	
+
 	return retval;
+}
+
+
+int lp_read_a32_core0_cti(uint32_t reg, uint32_t *value) {
+	int retval = ERROR_OK;
+
+	retval = lp_read_a32_debug(LP_A32_CORE0_CTI + reg, value);
+
+	return retval;
+}
+
+int lp_write_a32_core0_cti(uint32_t reg, uint32_t value) {
+	int retval = ERROR_OK;
+
+	retval = lp_write_a32_debug(LP_A32_CORE0_CTI + reg, value);
+
+	return retval;
+}
+
+void get_status_string(uint32_t status, char *name) {
+	switch(status) {
+		case DEBUG_STATUS_RESTARTING:
+			strcpy(name, "restarting");
+			break;
+		case DEBUG_STATUS_NON_DEBUG:
+			strcpy(name, "non debug, normal running");
+			break;
+		case DEBUG_STATUS_BREAK_POINT:
+			strcpy(name, "break point");
+			break;
+		case DEBUG_STATUS_EXTERNAL_DEBUG_REQUEST:
+			strcpy(name, "external debug request");
+			break;
+		case DEBUG_STATUS_EXCLUSIVE_HALTING_STEP:
+			strcpy(name, "exclusive halting halting step");
+			break;
+		case DEBUG_STATUS_OS_UNLOCK_CATCH:
+			strcpy(name, "os unlock catch");
+			break;
+		case DEBUG_STATUS_RESET_CATCH:
+			strcpy(name, "reset catch");
+			break;
+		case DEBUG_STATUS_WATCHPOINT:
+			strcpy(name, "watchpoint");
+			break;
+		case DEBUG_STATUS_HLT_INSTRUCTION:
+			strcpy(name, "hlt instruction");
+			break;
+		case DEBUG_STATUS_SOFTWARE_ACCESS_DEBUG_REG:
+			strcpy(name, "software access debug register");
+			break;
+		case DEBUG_STATUS_EXCEPTION_CATCH:
+			strcpy(name, "exception catch");
+			break;
+		case DEBUG_STATUS_NO_SYNDROME_HALTING_STEP:
+			strcpy(name, "no syndrome halting setp");
+			break;
+		default:
+			LOG_OUTPUT("unknew status: 0x%x\n", status);
+			strcpy(name, "unknow");
+			break;
+	}
 }
 
 COMMAND_HANDLER(handle_read_a32_core0_debug_reg_command)
@@ -122,7 +194,7 @@ COMMAND_HANDLER(handle_read_a32_core0_debug_reg_command)
 		return retval;
 	}
 
-	command_print(CMD, "0x%04x:  0x%08x", reg, value);
+	command_print(CMD, "0x%03x:  0x%08x", reg, value);
 	return ERROR_OK;
 }
 
@@ -147,7 +219,7 @@ COMMAND_HANDLER(handle_write_a32_core0_debug_reg_command)
 		return retval;
 	}
 
-	command_print(CMD, "0x%04x:  0x%08x", reg, value);
+	command_print(CMD, "0x%03x:  0x%08x", reg, value);
 	return ERROR_OK;
 }
 
@@ -167,6 +239,147 @@ COMMAND_HANDLER(handle_midr_command)
 	}
 
 	command_print(CMD, "MIDR:  0x%08x", value);
+	return ERROR_OK;
+}
+
+COMMAND_HANDLER(handle_read_a32_cti_reg_command)
+{
+	uint32_t value, reg, retval;
+
+	if (CMD_ARGC != 1)
+		return ERROR_COMMAND_SYNTAX_ERROR;
+
+	COMMAND_PARSE_NUMBER(u32, CMD_ARGV[0], reg);
+
+	if(!lp_a32_init) {
+		alius_lp_a32_init(global_dap);
+		lp_a32_init = 1;
+	}
+
+	retval = lp_read_a32_core0_cti(reg, &value);
+	if(retval != ERROR_OK) {
+		command_print(CMD, "read 0x%08x fail", reg);
+		return retval;
+	}
+
+	command_print(CMD, "0x%04x:  0x%08x", reg, value);
+	return ERROR_OK;
+}
+
+COMMAND_HANDLER(handle_write_a32_cti_reg_command)
+{
+	uint32_t value, reg, retval;
+
+	if (CMD_ARGC != 2)
+		return ERROR_COMMAND_SYNTAX_ERROR;
+
+	COMMAND_PARSE_NUMBER(u32, CMD_ARGV[0], reg);
+	COMMAND_PARSE_NUMBER(u32, CMD_ARGV[1], value);
+
+	if(!lp_a32_init) {
+		alius_lp_a32_init(global_dap);
+		lp_a32_init = 1;
+	}
+
+	retval = lp_write_a32_core0_cti(reg, value);
+	if(retval != ERROR_OK) {
+		command_print(CMD, "write 0x%08x fail", reg);
+		return retval;
+	}
+
+	command_print(CMD, "0x%04x:  0x%08x", reg, value);
+	return ERROR_OK;
+}
+
+COMMAND_HANDLER(handle_halt_command)
+{
+	uint32_t retval;
+
+	if (CMD_ARGC != 0)
+		return ERROR_COMMAND_SYNTAX_ERROR;
+
+	if(!lp_a32_init) {
+		alius_lp_a32_init(global_dap);
+		lp_a32_init = 1;
+	}
+
+	/* Enable trigger0 event from CTI to PE */
+	retval = lp_write_a32_core0_cti(CTI_OUTEN0, 0x1);
+	if(retval != ERROR_OK) {
+		command_print(CMD, "halt fail");
+		return retval;
+	}
+
+	/* Trigger event 0 to PE */
+	retval = lp_write_a32_core0_cti(CTI_CTIAPPPULSE, CTI_EVENT_DEBUG_REQUEST);
+	if(retval != ERROR_OK) {
+		command_print(CMD, "halt fail");
+		return retval;
+	}
+
+	return ERROR_OK;
+}
+
+COMMAND_HANDLER(handle_unhalt_command)
+{
+	uint32_t retval;
+
+	if (CMD_ARGC != 0)
+		return ERROR_COMMAND_SYNTAX_ERROR;
+
+	if(!lp_a32_init) {
+		alius_lp_a32_init(global_dap);
+		lp_a32_init = 1;
+	}
+
+	/* Clear event 0 */
+	retval = lp_write_a32_core0_cti(CTI_INTACK, 1 << 0);
+	if(retval != ERROR_OK) {
+		command_print(CMD, "unhalt fail");
+		return retval;
+	}
+
+	/* Enable trigger1 event from CTI to PE */
+	retval = lp_write_a32_core0_cti(CTI_OUTEN1, (1 << 1));
+	if(retval != ERROR_OK) {
+		command_print(CMD, "unhalt fail");
+		return retval;
+	}
+
+	/* Trigger event 1 to PE */
+	retval = lp_write_a32_core0_cti(CTI_CTIAPPPULSE, CTI_EVENT_RESTART_REQUEST);
+	if(retval != ERROR_OK) {
+		command_print(CMD, "unhalt fail");
+		return retval;
+	}
+
+	return ERROR_OK;
+}
+
+COMMAND_HANDLER(handle_status_command)
+{
+	uint32_t retval, value;
+	char status[256];
+
+	if (CMD_ARGC != 0)
+		return ERROR_COMMAND_SYNTAX_ERROR;
+
+	if(!lp_a32_init) {
+		alius_lp_a32_init(global_dap);
+		lp_a32_init = 1;
+	}
+
+	/* Get the EDSCR from debug interface */
+	retval = lp_read_a32_core0_debug(DEBUG_EDSCR, &value);
+	if(retval != ERROR_OK) {
+		command_print(CMD, "get status fail");
+		return retval;
+	}
+
+	value &= DEBUG_STATUS_MASK;
+	get_status_string(value, status);
+
+	command_print(CMD, "debug status:  %s", status);
 	return ERROR_OK;
 }
 
@@ -198,6 +411,41 @@ const struct command_registration alius_lp_a32_command_handlers[] = {
 		.mode = COMMAND_ANY,
 		.usage = "reg value",
 		.help = "write a32 debug componet, core0 debug register",
+	},
+	{
+		.name = "rc0cti",
+		.handler = &handle_read_a32_cti_reg_command,
+		.mode = COMMAND_ANY,
+		.usage = "reg",
+		.help = "read cti componet, core0 debug register",
+	},
+	{
+		.name = "wc0cti",
+		.handler = &handle_write_a32_cti_reg_command,
+		.mode = COMMAND_ANY,
+		.usage = "reg value",
+		.help = "write cti componet, core0 debug register",
+	},
+	{
+		.name = "halt",
+		.handler = &handle_halt_command,
+		.mode = COMMAND_ANY,
+		.usage = "",
+		.help = "halt core",
+	},
+	{
+		.name = "unhalt",
+		.handler = &handle_unhalt_command,
+		.mode = COMMAND_ANY,
+		.usage = "",
+		.help = "unhalt core",
+	},
+	{
+		.name = "status",
+		.handler = &handle_status_command,
+		.mode = COMMAND_ANY,
+		.usage = "",
+		.help = "dump core debug status",
 	},
 	COMMAND_REGISTRATION_DONE
 };

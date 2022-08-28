@@ -206,7 +206,7 @@ int lp_read_reg(struct command_invocation *cmd, uint32_t reg, uint32_t *value) {
 	/* generate opcode and reverse for send to EDITR */
 	/* MCR p14, 0, rn, c0, c5, 0 */
 	opcode = ARMV4_5_MCR(14, 0, reg, 0, 5, 0);
-	opcode_reverse = get_reverse();//(opcode << 16) | (opcode >> 16);
+	opcode_reverse = get_reverse(opcode);//(opcode << 16) | (opcode >> 16);
 	//LOG_OUTPUT("opcode: 0x%08x  opcode_reverse: 0x%08x\n", opcode, opcode_reverse);
 
 	/* execute instruction */
@@ -289,6 +289,63 @@ int lp_write_reg(struct command_invocation *cmd, uint32_t reg, uint32_t value) {
 	}
 
 	return retval;
+}
+
+int lp_dump_regs(struct command_invocation *cmd) {
+	uint32_t tmp_value, retval;
+
+	/* dump r0-r12 */
+	for(int i = 0; i < 13; i++) {
+		retval = lp_read_reg(cmd, i, &tmp_value);
+		if(retval != ERROR_OK) {
+			return retval;
+		}
+		command_print(CMD, "r%d	: 0x%08x", i, tmp_value);
+	}
+
+	/* dump sp */
+	retval = lp_read_reg(cmd, 13, &tmp_value);
+	if(retval != ERROR_OK) {
+		return retval;
+	}
+	command_print(CMD, "sp	: 0x%08x", tmp_value);
+
+	/* dump lr */
+	retval = lp_read_reg(cmd, 14, &tmp_value);
+	if(retval != ERROR_OK) {
+		return retval;
+	}
+	command_print(CMD, "lr	: 0x%08x", tmp_value);
+
+	/* dump pc */
+	retval = lp_read_reg(cmd, 15, &tmp_value);
+	if(retval != ERROR_OK) {
+		return retval;
+	}
+	command_print(CMD, "pc	: 0x%08x", tmp_value);
+
+	return ERROR_OK;
+}
+
+COMMAND_HANDLER(handle_regsdump_command)
+{
+	uint32_t retval;
+
+	if (CMD_ARGC != 0)
+		return ERROR_COMMAND_SYNTAX_ERROR;
+
+	if(!lp_a32_init) {
+		alius_lp_a32_init(global_dap);
+		lp_a32_init = 1;
+	}
+
+	retval = lp_dump_regs(CMD);
+	if(retval != ERROR_OK) {
+		command_print(CMD, "dump core registers fail");
+		return retval;
+	}
+
+	return ERROR_OK;
 }
 
 COMMAND_HANDLER(handle_regr_command)
@@ -626,6 +683,13 @@ const struct command_registration alius_lp_a32_command_handlers[] = {
 		.mode = COMMAND_ANY,
 		.usage = "reg value",
 		.help = "write core register",
+	},
+	{
+		.name = "regsdump",
+		.handler = &handle_regsdump_command,
+		.mode = COMMAND_ANY,
+		.usage = "",
+		.help = "dump core registers",
 	},
 	COMMAND_REGISTRATION_DONE
 };

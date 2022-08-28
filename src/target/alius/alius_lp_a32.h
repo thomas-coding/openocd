@@ -61,6 +61,16 @@
 	(((rd) << 12) | (0xf << 8) | 0x0) \
 	| (((0xe85 << 4) | rn) << 16)
 
+/* Store register (Thumb state)
+ * rt: source register
+ * rn: base register
+ * rd: flag destination register
+ * strex rt, rd, [rn]
+ */
+#define ARMV4_5_T_STREX(rt, rd, rn) \
+	(((rt) << 12) | ((rd) << 8) | 0x0) \
+	| (((0xe84 << 4) | rn) << 16)
+
 struct cpu_regs {
     /* general register */
     uint32_t r[13];

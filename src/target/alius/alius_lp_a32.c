@@ -31,6 +31,8 @@ int lp_read_a32_core0_debug(uint32_t reg, uint32_t *value);
 int lp_write_a32_core0_debug(uint32_t reg, uint32_t value);
 int lp_read_a32_core0_cti(uint32_t reg, uint32_t *value);
 int lp_write_a32_core0_cti(uint32_t reg, uint32_t value);
+int lp_read_reg(struct command_invocation *cmd, uint32_t reg, uint32_t *value);
+int lp_write_reg(struct command_invocation *cmd, uint32_t reg, uint32_t value);
 
 
 int lp_enable_debug(void) {
@@ -289,7 +291,7 @@ int lp_write_reg(struct command_invocation *cmd, uint32_t reg, uint32_t value) {
 	/* MRC p14, 0, rn, c0, c5, 0 */
 	opcode = ARMV4_5_MRC(14, 0, reg, 0, 5, 0);
 	opcode_reverse = get_reverse(opcode);
-	LOG_OUTPUT("opcode: 0x%08x  opcode_reverse: 0x%08x\n", opcode, opcode_reverse);
+	//LOG_OUTPUT("opcode: 0x%08x  opcode_reverse: 0x%08x\n", opcode, opcode_reverse);
 
 	/* execute instruction */
 	retval = lp_write_a32_core0_debug(DEBUG_EDITR, opcode_reverse);
@@ -469,6 +471,119 @@ int lp_read_memory(struct command_invocation *cmd, uint32_t address, uint32_t *v
 	return retval;
 }
 
+int lp_write_memory(struct command_invocation *cmd, uint32_t address, uint32_t value) {
+	int retval = ERROR_OK;
+	uint32_t opcode, opcode_reverse;
+
+	/* make sure core is halted */
+	retval = command_run_line(CMD_CTX, "alius lp halt");
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* we will use r0 r1 r2 for write memory, save it */
+	retval = save_cpu_regs(cmd);
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* write address to cp14 rx */
+	retval = lp_write_a32_core0_debug(DEBUG_DTRRX, address);
+	if (retval != ERROR_OK)
+		return retval;
+	//LOG_OUTPUT("DEBUG_DTRRX: 0x%08x\n", address);
+
+	/* generate opcode and reverse for send to EDITR */
+	/* MRC p14, 0, rn, c0, c5, 0 */
+	/* Used r0 store address */
+	opcode = ARMV4_5_MRC(14, 0, 0, 0, 5, 0);
+	opcode_reverse = get_reverse(opcode);
+	//LOG_OUTPUT("opcode: 0x%08x  opcode_reverse: 0x%08x\n", opcode, opcode_reverse);
+
+	/* execute instruction */
+	retval = lp_write_a32_core0_debug(DEBUG_EDITR, opcode_reverse);
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* wait fo instruction exceute complete */
+	retval = wait_instruction_execute_complete();
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* now r0 = address */
+
+	/* write value to cp14 rx */
+	retval = lp_write_a32_core0_debug(DEBUG_DTRRX, value);
+	if (retval != ERROR_OK)
+		return retval;
+	//LOG_OUTPUT("DEBUG_DTRRX: 0x%08x\n", value);
+
+	/* generate opcode and reverse for send to EDITR */
+	/* MRC p14, 0, rn, c0, c5, 0 */
+	/* Used r0 store address */
+	opcode = ARMV4_5_MRC(14, 0, 1, 0, 5, 0);
+	opcode_reverse = get_reverse(opcode);
+	//LOG_OUTPUT("opcode: 0x%08x  opcode_reverse: 0x%08x\n", opcode, opcode_reverse);
+
+	/* execute instruction */
+	retval = lp_write_a32_core0_debug(DEBUG_EDITR, opcode_reverse);
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* wait fo instruction exceute complete */
+	retval = wait_instruction_execute_complete();
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* now r1 = value */
+
+	/* generate opcode and reverse for send to EDITR */
+	/* LDREX R1, [R0] */
+	/* load r0 content to r1 */
+	opcode = ARMV4_5_T_STREX(1, 2, 0);//0xe8401200;
+	opcode_reverse = get_reverse(opcode);
+	//LOG_OUTPUT("opcode: 0x%08x  opcode_reverse: 0x%08x\n", opcode, opcode_reverse);
+
+	/* execute instruction */
+	retval = lp_write_a32_core0_debug(DEBUG_EDITR, opcode_reverse);
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* wait fo instruction exceute complete */
+	retval = wait_instruction_execute_complete();
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* now [address] = value */
+
+	retval = restore_cpu_regs(cmd);
+	if (retval != ERROR_OK)
+		return retval;
+	return retval;
+}
+
+COMMAND_HANDLER(handle_mw_command)
+{
+	uint32_t value, address, retval;
+
+	if (CMD_ARGC != 2)
+		return ERROR_COMMAND_SYNTAX_ERROR;
+
+	COMMAND_PARSE_NUMBER(u32, CMD_ARGV[0], address);
+	COMMAND_PARSE_NUMBER(u32, CMD_ARGV[1], value);
+
+	if(!lp_a32_init) {
+		alius_lp_a32_init(global_dap);
+		lp_a32_init = 1;
+	}
+
+	retval = lp_write_memory(cmd, address, value);
+	if(retval != ERROR_OK) {
+		command_print(CMD, "write 0x%08x fail", address);
+		return retval;
+	}
+
+	command_print(CMD, "0x%08x:  0x%08x", address, value);
+	return ERROR_OK;
+}
 
 COMMAND_HANDLER(handle_md_command)
 {
@@ -864,6 +979,13 @@ const struct command_registration alius_lp_a32_command_handlers[] = {
 		.mode = COMMAND_ANY,
 		.usage = "address",
 		.help = "dump memory, u32",
+	},
+	{
+		.name = "mw",
+		.handler = &handle_mw_command,
+		.mode = COMMAND_ANY,
+		.usage = "address value",
+		.help = "write memory, u32",
 	},
 	COMMAND_REGISTRATION_DONE
 };

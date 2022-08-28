@@ -52,5 +52,19 @@
 #define EDSCR_HDE BIT(14)
 #define EDSCR_ITE BIT(24)
 
+
+/* Load register (Thumb state)
+ * rd: destination register
+ * rn: base register
+ */
+#define ARMV4_5_T_LDREX(rd, rn) \
+	(((rd) << 12) | (0xf << 8) | 0x0) \
+	| (((0xe85 << 4) | rn) << 16)
+
+struct cpu_regs {
+    /* general register */
+    uint32_t r[13];
+};
+
 extern const struct command_registration alius_lp_a32_command_handlers[];
 #endif /* OPENOCD_ALIUS_LP_A32_H */

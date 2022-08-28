@@ -71,6 +71,34 @@ void alius_lp_a32_init(struct adiv5_dap *dap) {
 		LOG_OUTPUT("alius lp a32 init fail\n");
 }
 
+struct cpu_regs cortext_regs;
+int save_cpu_regs(struct command_invocation *cmd) {
+	int retval = ERROR_OK;
+	uint32_t temp_value;
+
+	for(int i = 0; i < 13; i++) {
+		retval = lp_read_reg(cmd, i, &temp_value);
+		if(retval != ERROR_OK) {
+			return retval;
+		}
+
+		cortext_regs.r[i] = temp_value;
+	}
+	return retval;
+}
+
+int restore_cpu_regs(struct command_invocation *cmd) {
+	int retval = ERROR_OK;
+
+	for(int i = 0; i < 13; i++) {
+		retval = lp_write_reg(cmd, i, cortext_regs.r[i]);
+		if(retval != ERROR_OK) {
+			return retval;
+		}
+	}
+	return retval;
+}
+
 int lp_read_a32_debug(uint32_t address, uint32_t *value) {
 	int retval = ERROR_OK;
 
@@ -252,7 +280,7 @@ int lp_write_reg(struct command_invocation *cmd, uint32_t reg, uint32_t value) {
 	if (retval != ERROR_OK)
 		return ERROR_FAIL;
 
-	/* write data to cp15 rx */
+	/* write data to cp14 rx */
 	retval = lp_write_a32_core0_debug(DEBUG_DTRRX, value);
 	if (retval != ERROR_OK)
 		return ERROR_FAIL;
@@ -324,6 +352,145 @@ int lp_dump_regs(struct command_invocation *cmd) {
 	}
 	command_print(CMD, "pc	: 0x%08x", tmp_value);
 
+	return ERROR_OK;
+}
+
+int wait_instruction_execute_complete(void) {
+	int retval = ERROR_OK;
+	uint32_t temp_value;
+	int64_t time;
+
+	/* wait fo instruction exceute complete */
+	time = timeval_ms();
+	while(1) {
+
+		/* Get the EDSCR from debug interface */
+		retval = lp_read_a32_core0_debug(DEBUG_EDSCR, &temp_value);
+		if(retval != ERROR_OK) {
+			LOG_OUTPUT("get EDSCR status fail\n");
+			return retval;
+		}
+
+		if(temp_value & EDSCR_ITE)//instruction complete
+			break;
+
+		if (timeval_ms() > time + EDSCR_REGRDY_TIMEOUT) {
+			LOG_OUTPUT("Timeout waiting for instruction execute\n");
+			return ERROR_TIMEOUT_REACHED;
+		}
+	}
+
+	return retval;
+}
+
+int lp_read_memory(struct command_invocation *cmd, uint32_t address, uint32_t *value) {
+	int retval = ERROR_OK;
+	uint32_t opcode, opcode_reverse;
+
+	/* make sure core is halted */
+	retval = command_run_line(CMD_CTX, "alius lp halt");
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* we will use r0 r1 for read memory, save it */
+	retval = save_cpu_regs(cmd);
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* write address to cp14 rx */
+	retval = lp_write_a32_core0_debug(DEBUG_DTRRX, address);
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* generate opcode and reverse for send to EDITR */
+	/* MRC p14, 0, rn, c0, c5, 0 */
+	/* Used r0 store address */
+	opcode = ARMV4_5_MRC(14, 0, 0, 0, 5, 0);
+	opcode_reverse = get_reverse(opcode);
+	//LOG_OUTPUT("opcode: 0x%08x  opcode_reverse: 0x%08x\n", opcode, opcode_reverse);
+
+	/* execute instruction */
+	retval = lp_write_a32_core0_debug(DEBUG_EDITR, opcode_reverse);
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* wait fo instruction exceute complete */
+	retval = wait_instruction_execute_complete();
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* now r0 = address */
+
+	/* generate opcode and reverse for send to EDITR */
+	/* LDREX R1, [R0] */
+	/* load r0 content to r1 */
+	opcode = ARMV4_5_T_LDREX(1, 0);//0xe8501f00;
+	opcode_reverse = get_reverse(opcode);
+	//LOG_OUTPUT("opcode: 0x%08x  opcode_reverse: 0x%08x\n", opcode, opcode_reverse);
+
+	/* execute instruction */
+	retval = lp_write_a32_core0_debug(DEBUG_EDITR, opcode_reverse);
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* wait fo instruction exceute complete */
+	retval = wait_instruction_execute_complete();
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* now r1 = [address] */
+
+	/* generate opcode and reverse for send to EDITR */
+	/* MCR p14, 0, rn, c0, c5, 0 */
+	/* Get value from r1 to cp14 TX */
+	opcode = ARMV4_5_MCR(14, 0, 1, 0, 5, 0);
+	opcode_reverse = get_reverse(opcode);//(opcode << 16) | (opcode >> 16);
+	//LOG_OUTPUT("opcode: 0x%08x  opcode_reverse: 0x%08x\n", opcode, opcode_reverse);
+
+	/* execute instruction */
+	retval = lp_write_a32_core0_debug(DEBUG_EDITR, opcode_reverse);
+	if (retval != ERROR_OK)
+		return ERROR_FAIL;
+
+	/* wait fo instruction exceute complete */
+	retval = wait_instruction_execute_complete();
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* now DTRTX = value */
+	/* read from DTRTX */
+	retval = lp_read_a32_core0_debug(DEBUG_DTRTX, value);
+	if (retval != ERROR_OK)
+		return ERROR_FAIL;
+
+	retval = restore_cpu_regs(cmd);
+	if (retval != ERROR_OK)
+		return retval;
+	return retval;
+}
+
+
+COMMAND_HANDLER(handle_md_command)
+{
+	uint32_t value, address, retval;
+
+	if (CMD_ARGC != 1)
+		return ERROR_COMMAND_SYNTAX_ERROR;
+
+	COMMAND_PARSE_NUMBER(u32, CMD_ARGV[0], address);
+
+	if(!lp_a32_init) {
+		alius_lp_a32_init(global_dap);
+		lp_a32_init = 1;
+	}
+
+	retval = lp_read_memory(cmd, address, &value);
+	if(retval != ERROR_OK) {
+		command_print(CMD, "read 0x%08x fail", address);
+		return retval;
+	}
+
+	command_print(CMD, "0x%08x:  0x%08x", address, value);
 	return ERROR_OK;
 }
 
@@ -690,6 +857,13 @@ const struct command_registration alius_lp_a32_command_handlers[] = {
 		.mode = COMMAND_ANY,
 		.usage = "",
 		.help = "dump core registers",
+	},
+	{
+		.name = "md",
+		.handler = &handle_md_command,
+		.mode = COMMAND_ANY,
+		.usage = "address",
+		.help = "dump memory, u32",
 	},
 	COMMAND_REGISTRATION_DONE
 };

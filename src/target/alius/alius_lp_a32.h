@@ -13,7 +13,11 @@
 #define LP_A32_CORE0_TRACE 0x40000
 
 /* Debug memory */
+#define EDSCR_REGRDY_TIMEOUT 500
+#define DEBUG_DTRRX 0x080
+#define DEBUG_EDITR 0x084
 #define DEBUG_EDSCR 0x088
+#define DEBUG_DTRTX 0x08c
 #define DEBUG_OSLAR 0x300
 #define DEBUG_MIDR 0xd00
 
@@ -44,6 +48,9 @@
 #define DEBUG_STATUS_SOFTWARE_ACCESS_DEBUG_REG 0x33
 #define DEBUG_STATUS_EXCEPTION_CATCH 0x37
 #define DEBUG_STATUS_NO_SYNDROME_HALTING_STEP 0x3B
+
+#define EDSCR_HDE BIT(14)
+#define EDSCR_ITE BIT(24)
 
 extern const struct command_registration alius_lp_a32_command_handlers[];
 #endif /* OPENOCD_ALIUS_LP_A32_H */

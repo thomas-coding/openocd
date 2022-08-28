@@ -385,6 +385,114 @@ int wait_instruction_execute_complete(void) {
 	return retval;
 }
 
+int lp_read_memory_by_access_mode(struct command_invocation *cmd, uint32_t address, uint32_t *value, uint32_t count) {
+	int retval = ERROR_OK;
+	uint32_t opcode, opcode_reverse;
+	uint32_t reg;
+
+	/* make sure core is halted */
+	retval = command_run_line(CMD_CTX, "alius lp halt");
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* we will use r0 r1 for read memory, save it */
+	retval = save_cpu_regs(cmd);
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* ------ step 1: write address  to r0 ------ */
+	/* write address to cp14 rx */
+	retval = lp_write_a32_core0_debug(DEBUG_DTRRX, address);
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* generate opcode and reverse for send to EDITR */
+	/* MRC p14, 0, rn, c0, c5, 0 */
+	/* Used r0 store address */
+	opcode = ARMV4_5_MRC(14, 0, 0, 0, 5, 0);
+	opcode_reverse = get_reverse(opcode);
+	//LOG_OUTPUT("opcode: 0x%08x  opcode_reverse: 0x%08x\n", opcode, opcode_reverse);
+
+	/* execute instruction */
+	retval = lp_write_a32_core0_debug(DEBUG_EDITR, opcode_reverse);
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* wait fo instruction exceute complete */
+	retval = wait_instruction_execute_complete();
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* now r0 = address */
+
+	/* ------ step 2: dummy read r0 to cp14 tx ------ */
+	/* generate opcode and reverse for send to EDITR */
+	/* MCR p14, 0, rn, c0, c5, 0 */
+	/* Get value from r0 to cp14 TX */
+	opcode = ARMV4_5_MCR(14, 0, 0, 0, 5, 0);
+	opcode_reverse = get_reverse(opcode);//(opcode << 16) | (opcode >> 16);
+	//LOG_OUTPUT("opcode: 0x%08x  opcode_reverse: 0x%08x\n", opcode, opcode_reverse);
+
+	/* execute instruction */
+	retval = lp_write_a32_core0_debug(DEBUG_EDITR, opcode_reverse);
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* wait fo instruction exceute complete */
+	retval = wait_instruction_execute_complete();
+	if (retval != ERROR_OK)
+		return retval;
+
+
+	/* ------ step 3: change to memory access mode ------ */
+	retval = lp_read_a32_core0_debug(DEBUG_EDSCR, &reg);
+	if (retval != ERROR_OK)
+		return retval;
+	reg |= EDSCR_MA;
+	retval = lp_write_a32_core0_debug(DEBUG_EDSCR, reg);
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* ------ step 4: read DTRTX and discard value ------ */
+	/* read from DTRTX */
+	retval = lp_read_a32_core0_debug(DEBUG_DTRTX, value);
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* ------ step 5: read DTRTX , get value ------ */
+	/* hardware will do:
+	 * LDR R1,[R0],#4
+	 * MCR p14,0,R1,c0,c5,0
+	 * it will get the [r0] to cp14 DTRTX and loop this */
+	count--;
+	while(count) {
+		retval = lp_read_a32_core0_debug(DEBUG_DTRTX, value);
+		if (retval != ERROR_OK)
+			return retval;
+		count--;
+		value++;
+	}
+
+	/* ------ step 6: set access mode back to normal mode ------ */
+	retval = lp_read_a32_core0_debug(DEBUG_EDSCR, &reg);
+	if (retval != ERROR_OK)
+		return retval;
+	reg &= ~EDSCR_MA;
+	retval = lp_write_a32_core0_debug(DEBUG_EDSCR, reg);
+	if (retval != ERROR_OK)
+		return retval;
+
+	/* ------ step 7: read DTRTX , get last value ------ */
+	retval = lp_read_a32_core0_debug(DEBUG_DTRTX, value);
+	if (retval != ERROR_OK)
+		return retval;
+
+	retval = restore_cpu_regs(cmd);
+	if (retval != ERROR_OK)
+		return retval;
+	return retval;
+}
+
 int lp_read_memory(struct command_invocation *cmd, uint32_t address, uint32_t *value) {
 	int retval = ERROR_OK;
 	uint32_t opcode, opcode_reverse;
@@ -587,25 +695,42 @@ COMMAND_HANDLER(handle_mw_command)
 
 COMMAND_HANDLER(handle_md_command)
 {
-	uint32_t value, address, retval;
+	uint32_t address, retval, count;
+	uint32_t *value;
 
-	if (CMD_ARGC != 1)
+	if (CMD_ARGC != 1 && CMD_ARGC != 2)
 		return ERROR_COMMAND_SYNTAX_ERROR;
 
 	COMMAND_PARSE_NUMBER(u32, CMD_ARGV[0], address);
+
+	if(CMD_ARGC == 2)
+		COMMAND_PARSE_NUMBER(u32, CMD_ARGV[1], count);
+	else
+		count = 1;
+
+	value = malloc(4 * count);
+	if(!value) {
+		command_print(CMD, "read 0x%08x fail, malloc %d fail", address, count);
+		return ERROR_FAIL;
+	}
 
 	if(!lp_a32_init) {
 		alius_lp_a32_init(global_dap);
 		lp_a32_init = 1;
 	}
 
-	retval = lp_read_memory(cmd, address, &value);
+	//retval = lp_read_memory(cmd, address, &value);
+	retval = lp_read_memory_by_access_mode(cmd, address, value, count);
 	if(retval != ERROR_OK) {
 		command_print(CMD, "read 0x%08x fail", address);
 		return retval;
 	}
 
-	command_print(CMD, "0x%08x:  0x%08x", address, value);
+	for(uint32_t i = 0; i < count; i++) {
+		command_print(CMD, "0x%08x:  0x%08x", address, *value);
+		address += 4;
+		value++;
+	}
 	return ERROR_OK;
 }
 

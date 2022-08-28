@@ -51,6 +51,7 @@
 
 #define EDSCR_HDE BIT(14)
 #define EDSCR_ITE BIT(24)
+#define EDSCR_MA BIT(20)
 
 
 /* Load register (Thumb state)

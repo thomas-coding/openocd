@@ -5,6 +5,7 @@ shell_folder=$(cd "$(dirname "$0")" || exit;pwd)
 openocd_dir=""
 
 # This script may in openocd/script dir or the same as openocd dir
+cd ${shell_folder}
 if [ -d "openocd" ]; then
     openocd_dir=${shell_folder}/openocd
     echo "find openocd ${openocd_dir}"

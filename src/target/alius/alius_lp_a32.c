@@ -1102,8 +1102,8 @@ const struct command_registration alius_lp_a32_command_handlers[] = {
 		.name = "md",
 		.handler = &handle_md_command,
 		.mode = COMMAND_ANY,
-		.usage = "address",
-		.help = "dump memory, u32",
+		.usage = "address [count]",
+		.help = "dump memory, u32, count is how many u32 dump",
 	},
 	{
 		.name = "mw",

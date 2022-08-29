@@ -348,11 +348,14 @@ int lp_dump_regs(struct command_invocation *cmd) {
 	command_print(CMD, "lr	: 0x%08x", tmp_value);
 
 	/* dump pc */
+	//there are something wrong when dump pc, not support?
+#if 0
 	retval = lp_read_reg(cmd, 15, &tmp_value);
 	if(retval != ERROR_OK) {
 		return retval;
 	}
 	command_print(CMD, "pc	: 0x%08x", tmp_value);
+#endif
 
 	return ERROR_OK;
 }

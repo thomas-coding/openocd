@@ -19,8 +19,29 @@ fi
 
 # First time config it. only execute once
 cd ${openocd_dir}
+
+openocd_install=${openocd_dir}/openocd_install
+
 ./bootstrap
-./configure --enable-jlink CFLAGS='-g -O0'
+./configure --enable-jlink CFLAGS='-g -O0' \
+--prefix=${openocd_install} \
+--exec-prefix=${openocd_install}
+
+# Delete install
+rm -rf ${openocd_install}
+rm -rf ${openocd_dir}/openocd_install.tar.gz
 
 # Build
 make -j4
+
+# Install
+make install
+
+# Copy to install
+cd ${openocd_install}
+mkdir -p ${openocd_install}/script
+cp -f ${openocd_dir}/script/run_openocd.sh ${openocd_install}/script
+cp -f ${openocd_dir}/script/run_gdb.sh ${openocd_install}/script
+
+cd ${openocd_dir}
+tar -zcf ${openocd_dir}/openocd_install.tar.gz openocd_install

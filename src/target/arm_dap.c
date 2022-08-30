@@ -35,7 +35,10 @@ struct arm_dap_object {
 void alius_init_ap_new(struct adiv5_dap *dap) {
 	dap->ap[0].ap_num = TOP_AON_APBAP;
 	dap->ap[0].target = TARGET_ALIUS;
+	dap->ap[0].refcount++;
 	dap->ap[1].ap_num = TOP_LP_APBAP;
+	dap->ap[1].target = 0;
+	dap->ap[1].refcount++;
 }
 
 static void dap_instance_init(struct adiv5_dap *dap)
@@ -56,6 +59,7 @@ static void dap_instance_init(struct adiv5_dap *dap)
 		dap->ap[i].config_ap_never_release = false;
 	}
 	alius_init_ap_new(dap);
+
 	INIT_LIST_HEAD(&dap->cmd_journal);
 	INIT_LIST_HEAD(&dap->cmd_pool);
 }

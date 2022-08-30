@@ -29,10 +29,22 @@ fi
 cd ${project_dir}
 
 #-ex "monitor reset halt"
-
-# run Gdb
-arm-none-eabi-gdb \
--ex 'target remote localhost:3333' \
--ex "add-symbol-file ${project_dir}/out/alius_lp/intermediate/pigweed/alius_m33_size_optimized/obj/freertos/FreeRTOS/project/alius_m33/bin/alius_m33_elf.elf" \
--ex "add-symbol-file ${project_dir}/out/alius_lp/intermediate/pigweed/alius_m33_size_optimized/obj/trusted-firmware-m/bin/tfm_s.elf" \
--q
+# Get config file by user input
+if [[ $1  = "m33" ]]; then
+    # run Gdb
+    arm-none-eabi-gdb \
+    -ex 'target remote localhost:3333' \
+    -ex "add-symbol-file ${project_dir}/out/alius_lp/intermediate/pigweed/alius_m33_size_optimized/obj/freertos/FreeRTOS/project/alius_m33/bin/alius_m33_elf.elf" \
+    -ex "add-symbol-file ${project_dir}/out/alius_lp/intermediate/pigweed/alius_m33_size_optimized/obj/trusted-firmware-m/bin/tfm_s.elf" \
+    -q
+elif [[ $1  = "lp" ]]; then
+    # run Gdb
+    arm-none-eabi-gdb \
+    -ex 'target remote localhost:3333' \
+    -ex "add-symbol-file ${project_dir}/out/alius_lp/intermediate/atf/alius/release/bl2/bl2.elf" \
+    -ex "add-symbol-file ${project_dir}/out/alius_lp/intermediate/optee/optee_os/core/tee.elf" \
+    -q
+else
+    echo "please specify which module to debug, like ./run_gdb.sh m33"
+    exit
+fi

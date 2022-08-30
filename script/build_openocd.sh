@@ -42,6 +42,7 @@ cd ${openocd_install}
 mkdir -p ${openocd_install}/script
 cp -f ${openocd_dir}/script/run_openocd.sh ${openocd_install}/script
 cp -f ${openocd_dir}/script/run_gdb.sh ${openocd_install}/script
+cp -f ${openocd_dir}/script/dump.sh ${openocd_install}/script
 
 cd ${openocd_dir}
 tar -zcf ${openocd_dir}/openocd_install.tar.gz openocd_install

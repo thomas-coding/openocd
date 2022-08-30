@@ -30,6 +30,9 @@ else
     exit
 fi
 
+# Change to project root dir for monitor pwd is root dir
+cd ${openocd_dir}/..
+
 #sudo gdb --args ${openocd} -f ${m33_config} -f ${target_config} -s ${source} --debug
 sudo ${openocd_dir}/src/openocd -f ${config}
  

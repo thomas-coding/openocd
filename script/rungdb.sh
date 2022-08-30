@@ -24,6 +24,8 @@ fi
 
 cd ${project_dir}
 
+#-ex "monitor reset halt"
+
 # run Gdb
 arm-none-eabi-gdb \
 -ex 'target remote localhost:3333' \

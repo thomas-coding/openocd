@@ -32,6 +32,12 @@ struct arm_dap_object {
 	const struct swd_driver *swd;
 };
 
+void alius_init_ap_new(struct adiv5_dap *dap) {
+	dap->ap[0].ap_num = TOP_AON_APBAP;
+	dap->ap[0].target = TARGET_ALIUS;
+	dap->ap[1].ap_num = TOP_LP_APBAP;
+}
+
 static void dap_instance_init(struct adiv5_dap *dap)
 {
 	int i;
@@ -49,6 +55,7 @@ static void dap_instance_init(struct adiv5_dap *dap)
 		dap->ap[i].refcount = 0;
 		dap->ap[i].config_ap_never_release = false;
 	}
+	alius_init_ap_new(dap);
 	INIT_LIST_HEAD(&dap->cmd_journal);
 	INIT_LIST_HEAD(&dap->cmd_pool);
 }

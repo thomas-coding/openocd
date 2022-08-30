@@ -1002,17 +1002,6 @@ bool is_ap_num_valid(struct adiv5_dap *dap, uint64_t ap_num)
 	return false;
 }
 
-
-void alius_init_ap_new(struct adiv5_dap *dap) {
-#if 1
-	dap->ap[0].ap_num = TOP_AON_APBAP;
-	dap->ap[0].target = TARGET_ALIUS;
-#else //lp a32
-	dap->ap[0].ap_num = TOP_LP_APBAP;
-	//dap->ap[0].target = TARGET_ALIUS;
-#endif
-}
-
 /*
  * This function checks the ID for each access port to find the requested Access Port type
  * It also calls dap_get_ap() to increment the AP refcount
@@ -1021,16 +1010,8 @@ int dap_find_get_ap(struct adiv5_dap *dap, enum ap_type type_to_find, struct adi
 {
 	if (is_adiv6(dap)) {
 		/* TODO: scan the ROM table and detect the AP available */
-		//LOG_DEBUG("On ADIv6 we cannot scan all the possible AP");
-		//return ERROR_FAIL;
-		alius_init_ap_new(dap);
-#if 1
-		struct adiv5_ap *ap = dap_get_ap(dap, TOP_AON_APBAP);
-#else //lp a32
-		struct adiv5_ap *ap = dap_get_ap(dap, TOP_LP_APBAP);
-#endif
-		*ap_out = ap;
-		return ERROR_OK;
+		LOG_DEBUG("On ADIv6 we cannot scan all the possible AP");
+		return ERROR_FAIL;
 	}
 
 	/* Maximum AP number is 255 since the SELECT register is 8 bits */

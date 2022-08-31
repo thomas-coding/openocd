@@ -28,10 +28,22 @@ fi
 
 cd ${project_dir}
 
+# m33 elf
+tfm_elf=${project_dir}/out/alius_lp/intermediate/pigweed/alius_m33_size_optimized/obj/trusted-firmware-m/bin/tfm_s.elf
+freerots_elf=${project_dir}/out/alius_lp/intermediate/pigweed/alius_m33_size_optimized/obj/freertos/FreeRTOS/project/alius_m33/bin/alius_m33_elf.elf
+
+# lp elf
+bl2_elf=${project_dir}/out/alius_lp/intermediate/atf/alius/release/bl2/bl2.elf
+lp_tee_elf=${project_dir}/out/alius_lp/intermediate/optee/optee_os/core/tee.elf
+lp_uboot_elf=${project_dir}/out/alius_lp/intermediate/uboot/u-boot
+kernel_elf=${project_dir}/out/alius_lp/intermediate/kernel/vmlinux
+
 echo "starting dump assemble, wait ..."
-rm -f bl2.asm tee.asm freertos.asm tfm.asm
-arm-none-eabi-objdump -xD ${project_dir}/out/alius_lp/intermediate/atf/alius/release/bl2/bl2.elf > bl2.asm
-arm-none-eabi-objdump -xD ${project_dir}/out/alius_lp/intermediate/optee/optee_os/core/tee.elf > tee.asm
-arm-none-eabi-objdump -xD ${project_dir}/out/alius_lp/intermediate/pigweed/alius_m33_size_optimized/obj/freertos/FreeRTOS/project/alius_m33/bin/alius_m33_elf.elf > freertos.asm
-arm-none-eabi-objdump -xD ${project_dir}/out/alius_lp/intermediate/pigweed/alius_m33_size_optimized/obj/trusted-firmware-m/bin/tfm_s.elf > tfm.asm
+rm -f bl2.asm lp_tee.asm lp_uboot.asm lp_kernel.asm freertos.asm tfm.asm
+arm-none-eabi-objdump -xD ${bl2_elf} > bl2.asm
+arm-none-eabi-objdump -xD ${lp_tee_elf} > lp_tee.asm
+arm-none-eabi-objdump -xD ${lp_uboot_elf} > lp_uboot.asm
+arm-none-eabi-objdump -xd ${kernel_elf} > lp_kernel.asm
+arm-none-eabi-objdump -xD ${freerots_elf} > freertos.asm
+arm-none-eabi-objdump -xD ${tfm_elf} > tfm.asm
 echo "dump done"

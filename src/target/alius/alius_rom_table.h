@@ -65,7 +65,7 @@ enum target_class {
 #define LP_A32_APBAP 0x01000000
 
 //hp
-#define HP_A32_APBAP 0x06000000
+#define HP_A32_APBAP 0x02000000
 
 #define DEV_ARCH_OFFSET 0x1FBC
 

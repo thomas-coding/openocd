@@ -39,6 +39,9 @@ void alius_init_ap_new(struct adiv5_dap *dap) {
 	dap->ap[1].ap_num = TOP_LP_APBAP;
 	dap->ap[1].target = 0;
 	dap->ap[1].refcount++;
+	dap->ap[2].ap_num = TOP_HP_APBAP;
+	dap->ap[2].target = 0;
+	dap->ap[2].refcount++;
 }
 
 static void dap_instance_init(struct adiv5_dap *dap)

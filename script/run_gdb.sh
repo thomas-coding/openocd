@@ -36,7 +36,11 @@ freerots_elf=${project_dir}/out/alius_lp/intermediate/pigweed/alius_m33_size_opt
 bl2_elf=${project_dir}/out/alius_lp/intermediate/atf/alius/release/bl2/bl2.elf
 lp_tee_elf=${project_dir}/out/alius_lp/intermediate/optee/optee_os/core/tee.elf
 lp_uboot_elf=${project_dir}/out/alius_lp/intermediate/uboot/u-boot
-kernel_elf=${project_dir}/out/alius_lp/intermediate/kernel/vmlinux
+lp_kernel_elf=${project_dir}/out/alius_lp/intermediate/kernel/vmlinux
+
+# hp elf
+hp_uboot_elf=${project_dir}/out/alius_hp/intermediate/uboot/u-boot
+hp_kernel_elf=${project_dir}/out/alius_hp/intermediate/kernel/vmlinux
 
 #-ex "monitor reset halt"
 # Get config file by user input
@@ -54,7 +58,14 @@ elif [[ $1  = "lp" ]]; then
     -ex "add-symbol-file ${bl2_elf}" \
     -ex "add-symbol-file ${lp_tee_elf}" \
     -ex "add-symbol-file ${lp_uboot_elf}" \
-    -ex "add-symbol-file ${kernel_elf}" \
+    -ex "add-symbol-file ${lp_kernel_elf}" \
+    -q
+elif [[ $1  = "hp" ]]; then
+    # run Gdb
+    arm-none-eabi-gdb \
+    -ex 'target extended-remote localhost:3333' \
+    -ex "add-symbol-file ${hp_uboot_elf}" \
+    -ex "add-symbol-file ${hp_kernel_elf}" \
     -q
 else
     echo "please specify which module to debug, like ./run_gdb.sh m33"

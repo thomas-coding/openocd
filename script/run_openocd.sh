@@ -42,6 +42,9 @@ if [[ $1  = "m33" ]]; then
 elif [[ $1  = "lp" ]]; then
     config=alius_lp.cfg
     echo "Debug lp"
+elif [[ $1  = "hp" ]]; then
+    config=alius_hp.cfg
+    echo "Debug hp"
 else
     echo "please specify which module to debug, like ./run_openocd.sh m33"
     exit

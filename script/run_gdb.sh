@@ -1,7 +1,17 @@
 #!/bin/bash
 
 # Define the toolchain path
-export PATH="/home/cn1396/.toolchain/gcc-arm-none-eabi-10.3-2021.07/bin/:$PATH"
+toolchian_path=~/.toolchain
+if [[ $1  = "m33" ]]; then
+export PATH="${toolchian_path}/gcc-arm-none-eabi-10.3-2021.07/bin/:$PATH"
+elif [[ $1  = "lp" ]]; then
+export PATH="${toolchian_path}/gcc-arm-10.3-2021.07-x86_64-arm-none-eabi/bin/:$PATH"
+elif [[ $1  = "hp" ]]; then
+export PATH="${toolchian_path}/gcc-arm-10.3-2021.07-x86_64-arm-none-eabi/bin/:$PATH"
+else
+    echo "please specify which module to debug, like ./run_gdb.sh m33"
+    exit
+fi
 
 # Shell folder
 shell_folder=$(cd "$(dirname "$0")" || exit;pwd)
@@ -47,6 +57,7 @@ hp_kernel_elf=${project_dir}/out/alius_hp/intermediate/kernel/vmlinux
 if [[ $1  = "m33" ]]; then
     # run Gdb
     arm-none-eabi-gdb \
+    -ex "file ${tfm_elf}" \
     -ex 'target extended-remote localhost:3333' \
     -ex "add-symbol-file ${freerots_elf}" \
     -ex "add-symbol-file ${tfm_elf}" \
@@ -54,6 +65,7 @@ if [[ $1  = "m33" ]]; then
 elif [[ $1  = "lp" ]]; then
     # run Gdb
     arm-none-eabi-gdb \
+    -ex "file ${bl2_elf}" \
     -ex 'target extended-remote localhost:3333' \
     -ex "add-symbol-file ${bl2_elf}" \
     -ex "add-symbol-file ${lp_tee_elf}" \
@@ -63,6 +75,7 @@ elif [[ $1  = "lp" ]]; then
 elif [[ $1  = "hp" ]]; then
     # run Gdb
     arm-none-eabi-gdb \
+    -ex "file ${hp_kernel_elf}" \
     -ex 'target extended-remote localhost:3333' \
     -ex "add-symbol-file ${hp_uboot_elf}" \
     -ex "add-symbol-file ${hp_kernel_elf}" \

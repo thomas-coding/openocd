@@ -1,7 +1,17 @@
 #!/bin/bash
 
 # Define the toolchain path
-export PATH="/home/cn1396/.toolchain/gcc-arm-none-eabi-10.3-2021.07/bin/:$PATH"
+toolchian_path=~/.toolchain
+if [[ $1  = "m33" ]]; then
+export PATH="${toolchian_path}/gcc-arm-none-eabi-10.3-2021.07/bin/:$PATH"
+elif [[ $1  = "lp" ]]; then
+export PATH="${toolchian_path}/gcc-arm-10.3-2021.07-x86_64-arm-none-eabi/bin/:$PATH"
+elif [[ $1  = "hp" ]]; then
+export PATH="${toolchian_path}/gcc-arm-10.3-2021.07-x86_64-arm-none-eabi/bin/:$PATH"
+else
+    echo "please specify which module to debug, like ./run_gdb.sh m33"
+    exit
+fi
 
 # Shell folder
 shell_folder=$(cd "$(dirname "$0")" || exit;pwd)

@@ -65,7 +65,7 @@ if [[ $1  = "m33" ]]; then
 elif [[ $1  = "lp" ]]; then
     # run Gdb
     arm-none-eabi-gdb \
-    -ex "file ${bl2_elf}" \
+    -ex "file ${lp_kernel_elf}" \
     -ex 'target extended-remote localhost:3333' \
     -ex "add-symbol-file ${bl2_elf}" \
     -ex "add-symbol-file ${lp_tee_elf}" \

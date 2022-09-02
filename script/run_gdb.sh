@@ -52,21 +52,24 @@ lp_kernel_elf=${project_dir}/out/alius_lp/intermediate/kernel/vmlinux
 hp_uboot_elf=${project_dir}/out/alius_hp/intermediate/uboot/u-boot
 hp_kernel_elf=${project_dir}/out/alius_hp/intermediate/kernel/vmlinux
 
+# defalut is localhost, change ip for connect remote gdb server
+# ip=10.10.13.190
+server_ip=127.0.0.1
 #-ex "monitor reset halt"
 # Get config file by user input
 if [[ $1  = "m33" ]]; then
     # run Gdb
     arm-none-eabi-gdb \
     -ex "file ${tfm_elf}" \
-    -ex 'target extended-remote localhost:3333' \
+    -ex "target extended-remote ${server_ip}:3333" \
     -ex "add-symbol-file ${freerots_elf}" \
     -ex "add-symbol-file ${tfm_elf}" \
     -q
 elif [[ $1  = "lp" ]]; then
     # run Gdb
     arm-none-eabi-gdb \
-    -ex "file ${lp_kernel_elf}" \
-    -ex 'target extended-remote localhost:3333' \
+    -ex "file ${lp_uboot_elf}" \
+    -ex "target extended-remote ${server_ip}:3333" \
     -ex "add-symbol-file ${bl2_elf}" \
     -ex "add-symbol-file ${lp_tee_elf}" \
     -ex "add-symbol-file ${lp_uboot_elf}" \
@@ -75,8 +78,8 @@ elif [[ $1  = "lp" ]]; then
 elif [[ $1  = "hp" ]]; then
     # run Gdb
     arm-none-eabi-gdb \
-    -ex "file ${hp_kernel_elf}" \
-    -ex 'target extended-remote localhost:3333' \
+    -ex "file ${hp_uboot_elf}" \
+    -ex "target extended-remote ${server_ip}:3333" \
     -ex "add-symbol-file ${hp_uboot_elf}" \
     -ex "add-symbol-file ${hp_kernel_elf}" \
     -q

@@ -49,6 +49,7 @@ lp_uboot_elf=${project_dir}/out/alius_lp/intermediate/uboot/u-boot
 lp_kernel_elf=${project_dir}/out/alius_lp/intermediate/kernel/vmlinux
 
 # hp elf
+hp_tee_elf=${project_dir}/out/alius_hp/intermediate/optee/optee_os/core/tee.elf
 hp_uboot_elf=${project_dir}/out/alius_hp/intermediate/uboot/u-boot
 hp_kernel_elf=${project_dir}/out/alius_hp/intermediate/kernel/vmlinux
 
@@ -58,6 +59,7 @@ arm-none-eabi-objdump -xD ${bl2_elf} > bl2.asm
 arm-none-eabi-objdump -xD ${lp_tee_elf} > lp_tee.asm
 arm-none-eabi-objdump -xD ${lp_uboot_elf} > lp_uboot.asm
 arm-none-eabi-objdump -xd ${lp_kernel_elf} > lp_kernel.asm
+arm-none-eabi-objdump -xD ${hp_tee_elf} > hp_tee.asm
 arm-none-eabi-objdump -xD ${hp_uboot_elf} > hp_uboot.asm
 arm-none-eabi-objdump -xd ${hp_kernel_elf} > hp_kernel.asm
 arm-none-eabi-objdump -xD ${freerots_elf} > freertos.asm

@@ -13,6 +13,8 @@
 #include "alius_aon_m33.h"
 #include "alius_lp_a32.h"
 
+//#define ALIUS_DEBUG
+
 COMMAND_HANDLER(handle_version_command)
 {
 	command_print(CMD, "Alius command version: %d.%d", ALIUS_VERSION_MAJOR, ALIUS_VERSION_MIMOR);
@@ -27,6 +29,7 @@ static const struct command_registration alius_sub_command_handlers[] = {
 		.usage = "",
 		.help = "show the version of alius command",
 	},
+#ifdef ALIUS_DEBUG
 	{
 		.name = "romtable",
 		.chain = alius_rom_table_command_handlers,
@@ -48,6 +51,7 @@ static const struct command_registration alius_sub_command_handlers[] = {
 		.usage = "",
 		.help = "handle lp a32",
 	},
+#endif
 	COMMAND_REGISTRATION_DONE
 };
 

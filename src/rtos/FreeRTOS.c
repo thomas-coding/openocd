@@ -459,9 +459,15 @@ static int freertos_get_thread_reg_list(struct rtos *rtos, int64_t thread_id,
 	if (cm4_fpu_enabled == 1) {
 		/* Read the LR to decide between stacking with or without FPU */
 		uint32_t lr_svc = 0;
+#if 1 //m33
+		retval = target_read_u32(rtos->target,
+				stack_ptr + 0x4,
+				&lr_svc);
+#else
 		retval = target_read_u32(rtos->target,
 				stack_ptr + 0x20,
 				&lr_svc);
+#endif
 		if (retval != ERROR_OK) {
 			LOG_OUTPUT("Error reading stack frame from FreeRTOS thread");
 			return retval;

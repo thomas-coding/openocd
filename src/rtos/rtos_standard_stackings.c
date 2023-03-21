@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 /***************************************************************************
  *   Copyright (C) 2011 by Broadcom Corporation                            *
@@ -32,6 +32,27 @@ static const struct stack_register_offset rtos_standard_cortex_m3_stack_offsets[
 	{ ARMV7M_xPSR, 0x3c, 32 },		/* xPSR */
 };
 
+#if 1//m33
+static const struct stack_register_offset rtos_standard_cortex_m4f_stack_offsets[] = {
+	{ ARMV7M_R0,   0x28, 32 },		/* r0   */
+	{ ARMV7M_R1,   0x2c, 32 },		/* r1   */
+	{ ARMV7M_R2,   0x30, 32 },		/* r2   */
+	{ ARMV7M_R3,   0x34, 32 },		/* r3   */
+	{ ARMV7M_R4,   0x08, 32 },		/* r4   */
+	{ ARMV7M_R5,   0x0c, 32 },		/* r5   */
+	{ ARMV7M_R6,   0x10, 32 },		/* r6   */
+	{ ARMV7M_R7,   0x14, 32 },		/* r7   */
+	{ ARMV7M_R8,   0x18, 32 },		/* r8   */
+	{ ARMV7M_R9,   0x1c, 32 },		/* r9   */
+	{ ARMV7M_R10,  0x20, 32 },		/* r10  */
+	{ ARMV7M_R11,  0x24, 32 },		/* r11  */
+	{ ARMV7M_R12,  0x38, 32 },		/* r12  */
+	{ ARMV7M_R13,  -2,   32 },		/* sp   */
+	{ ARMV7M_R14,  0x3c, 32 },		/* lr   */
+	{ ARMV7M_PC,   0x40, 32 },		/* pc   */
+	{ ARMV7M_xPSR, 0x44, 32 },		/* xPSR */
+};
+#else
 static const struct stack_register_offset rtos_standard_cortex_m4f_stack_offsets[] = {
 	{ ARMV7M_R0,   0x24, 32 },		/* r0   */
 	{ ARMV7M_R1,   0x28, 32 },		/* r1   */
@@ -51,7 +72,29 @@ static const struct stack_register_offset rtos_standard_cortex_m4f_stack_offsets
 	{ ARMV7M_PC,   0x3c, 32 },		/* pc   */
 	{ ARMV7M_xPSR, 0x40, 32 },		/* xPSR */
 };
+#endif
 
+#if 1//m33
+static const struct stack_register_offset rtos_standard_cortex_m4f_fpu_stack_offsets[] = {
+	{ ARMV7M_R0,   0x68, 32 },		/* r0   */
+	{ ARMV7M_R1,   0x6c, 32 },		/* r1   */
+	{ ARMV7M_R2,   0x70, 32 },		/* r2   */
+	{ ARMV7M_R3,   0x74, 32 },		/* r3   */
+	{ ARMV7M_R4,   0x08, 32 },		/* r4   */
+	{ ARMV7M_R5,   0x0c, 32 },		/* r5   */
+	{ ARMV7M_R6,   0x10, 32 },		/* r6   */
+	{ ARMV7M_R7,   0x14, 32 },		/* r7   */
+	{ ARMV7M_R8,   0x18, 32 },		/* r8   */
+	{ ARMV7M_R9,   0x1c, 32 },		/* r9   */
+	{ ARMV7M_R10,  0x20, 32 },		/* r10  */
+	{ ARMV7M_R11,  0x24, 32 },		/* r11  */
+	{ ARMV7M_R12,  0x78, 32 },		/* r12  */
+	{ ARMV7M_R13,  -2,   32 },		/* sp   */
+	{ ARMV7M_R14,  0x7c, 32 },		/* lr   */
+	{ ARMV7M_PC,   0x80, 32 },		/* pc   */
+	{ ARMV7M_xPSR, 0x84, 32 },		/* xPSR */
+};
+#else
 static const struct stack_register_offset rtos_standard_cortex_m4f_fpu_stack_offsets[] = {
 	{ ARMV7M_R0,   0x64, 32 },		/* r0   */
 	{ ARMV7M_R1,   0x68, 32 },		/* r1   */
@@ -71,6 +114,7 @@ static const struct stack_register_offset rtos_standard_cortex_m4f_fpu_stack_off
 	{ ARMV7M_PC,   0x7c, 32 },		/* pc   */
 	{ ARMV7M_xPSR, 0x80, 32 },		/* xPSR */
 };
+#endif
 
 
 static const struct stack_register_offset rtos_standard_cortex_r4_stack_offsets[] = {
@@ -245,6 +289,15 @@ const struct rtos_register_stacking rtos_standard_cortex_m3_stacking = {
 	.register_offsets = rtos_standard_cortex_m3_stack_offsets
 };
 
+#if 1
+const struct rtos_register_stacking rtos_standard_cortex_m4f_stacking = {
+	.stack_registers_size = 0x48,
+	.stack_growth_direction = -1,
+	.num_output_registers = ARMV7M_NUM_CORE_REGS,
+	.calculate_process_stack = rtos_standard_cortex_m4f_stack_align,
+	.register_offsets = rtos_standard_cortex_m4f_stack_offsets
+};
+#else
 const struct rtos_register_stacking rtos_standard_cortex_m4f_stacking = {
 	.stack_registers_size = 0x44,
 	.stack_growth_direction = -1,
@@ -252,7 +305,17 @@ const struct rtos_register_stacking rtos_standard_cortex_m4f_stacking = {
 	.calculate_process_stack = rtos_standard_cortex_m4f_stack_align,
 	.register_offsets = rtos_standard_cortex_m4f_stack_offsets
 };
+#endif
 
+#if 1//m33
+const struct rtos_register_stacking rtos_standard_cortex_m4f_fpu_stacking = {
+	.stack_registers_size = 0xd0,
+	.stack_growth_direction = -1,
+	.num_output_registers = ARMV7M_NUM_CORE_REGS,
+	.calculate_process_stack = rtos_standard_cortex_m4f_fpu_stack_align,
+	.register_offsets = rtos_standard_cortex_m4f_fpu_stack_offsets
+};
+#else
 const struct rtos_register_stacking rtos_standard_cortex_m4f_fpu_stacking = {
 	.stack_registers_size = 0xcc,
 	.stack_growth_direction = -1,
@@ -260,6 +323,7 @@ const struct rtos_register_stacking rtos_standard_cortex_m4f_fpu_stacking = {
 	.calculate_process_stack = rtos_standard_cortex_m4f_fpu_stack_align,
 	.register_offsets = rtos_standard_cortex_m4f_fpu_stack_offsets
 };
+#endif
 
 const struct rtos_register_stacking rtos_standard_cortex_r4_stacking = {
 	.stack_registers_size = 0x48,

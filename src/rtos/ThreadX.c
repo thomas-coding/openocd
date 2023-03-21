@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 /***************************************************************************
  *   Copyright (C) 2011 by Broadcom Corporation                            *
@@ -319,6 +319,12 @@ static int threadx_update_threads(struct rtos *rtos)
 		rtos->thread_details->extra_info_str = NULL;
 		rtos->thread_details->thread_name_str = malloc(sizeof(tmp_str));
 		strcpy(rtos->thread_details->thread_name_str, tmp_str);
+
+		/* If we just invented thread 1 to represent the current execution, we
+		 * need to make sure the RTOS object also claims it's the current thread
+		 * so that threadx_get_thread_reg_list() doesn't attempt to read a
+		 * thread control block at 0x00000001. */
+		rtos->current_thread = 1;
 
 		if (thread_list_size == 0) {
 			rtos->thread_count = 1;

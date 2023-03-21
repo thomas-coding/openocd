@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+// SPDX-License-Identifier: GPL-2.0-or-later
 
 /***************************************************************************
  *   Copyright (C) 2011 by Broadcom Corporation                            *
@@ -437,7 +437,8 @@ static int freertos_get_thread_reg_list(struct rtos *rtos, int64_t thread_id,
 	int cm4_fpu_enabled = 0;
 	struct armv7m_common *armv7m_target = target_to_armv7m(rtos->target);
 	if (is_armv7m(armv7m_target)) {
-		if (armv7m_target->fp_feature == FPV4_SP) {
+		if ((armv7m_target->fp_feature == FPV4_SP) || (armv7m_target->fp_feature == FPV5_SP) ||
+				(armv7m_target->fp_feature == FPV5_DP)) {
 			/* Found ARM v7m target which includes a FPU */
 			uint32_t cpacr;
 
@@ -454,13 +455,19 @@ static int freertos_get_thread_reg_list(struct rtos *rtos, int64_t thread_id,
 			}
 		}
 	}
-
+	//LOG_OUTPUT("wjp cm4_fpu_enabled:%d\n", cm4_fpu_enabled);
 	if (cm4_fpu_enabled == 1) {
 		/* Read the LR to decide between stacking with or without FPU */
 		uint32_t lr_svc = 0;
+#if 1 //m33
+		retval = target_read_u32(rtos->target,
+				stack_ptr + 0x4,
+				&lr_svc);
+#else
 		retval = target_read_u32(rtos->target,
 				stack_ptr + 0x20,
 				&lr_svc);
+#endif
 		if (retval != ERROR_OK) {
 			LOG_OUTPUT("Error reading stack frame from FreeRTOS thread");
 			return retval;
@@ -470,7 +477,8 @@ static int freertos_get_thread_reg_list(struct rtos *rtos, int64_t thread_id,
 		else
 			return rtos_generic_stack_read(rtos->target, param->stacking_info_cm4f, stack_ptr, reg_list, num_regs);
 	} else
-		return rtos_generic_stack_read(rtos->target, param->stacking_info_cm3, stack_ptr, reg_list, num_regs);
+		return rtos_generic_stack_read(rtos->target, param->stacking_info_cm4f, stack_ptr, reg_list, num_regs);
+		//return rtos_generic_stack_read(rtos->target, param->stacking_info_cm3, stack_ptr, reg_list, num_regs);
 }
 
 static int freertos_get_symbol_list_to_lookup(struct symbol_table_elem *symbol_list[])
